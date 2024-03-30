@@ -19,6 +19,7 @@ from sshmitm.moduleparser import BaseModule
 from sshmitm.authentication import RemoteCredentials
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder, RemotePortForwardingForwarder
+from sshmitm.tracker import report_username
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -183,6 +184,7 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def get_allowed_auths(self, username: str) -> str:
+        report_username(username)
         if self.possible_auth_methods is None and not self.args.disable_auth_method_lookup:
             creds: RemoteCredentials = self.session.authenticator.get_remote_host_credentials(username)
             if creds.host is not None and creds.port is not None:

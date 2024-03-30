@@ -25,6 +25,8 @@ from sshmitm.forwarders.tunnel import (
 
 from sshmitm.session import BaseSession
 
+from sshmitm import tracker as _tracker
+
 
 def init_server_parser(parser: ModuleParser) -> None:
     parser.add_module(
@@ -128,11 +130,25 @@ def init_server_parser(parser: ModuleParser) -> None:
         default=f'SSHMITM_{ssh_mitm_version}',
         help='set a custom string as server banner'
     )
+    parser_group.add_argument(
+        '--notification-url',
+        dest='notification_url',
+        default=None,
+        help='set a HTTP URL that will get notifications for new usernames, it will receive a JSON body via POST'
+    )
+    parser_group.add_argument(
+        '--notification-authorization',
+        dest='notification_authorization',
+        default=None,
+        help='set the Authentication header field for notifications'
+    )
 
 
 def run_server(args: argparse.Namespace) -> None:
     if args.request_agent_breakin:
         args.authenticator.REQUEST_AGENT_BREAKIN = True
+    _tracker.config.notification_url = args.notification_url
+    _tracker.config.authorization_header = args.notification_authorization
 
     proxy = SSHProxyServer(
         args.listen_port,
