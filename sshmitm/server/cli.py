@@ -142,6 +142,12 @@ def init_server_parser(parser: ModuleParser) -> None:
         default=None,
         help='set the Authentication header field for notifications'
     )
+    parser_group.add_argument(
+        '--notification-identifier',
+        dest='notification_identifier',
+        default=None,
+        help='set optional identifier that is included in the JSON body'
+    )
 
 
 def run_server(args: argparse.Namespace) -> None:
@@ -149,6 +155,7 @@ def run_server(args: argparse.Namespace) -> None:
         args.authenticator.REQUEST_AGENT_BREAKIN = True
     _tracker.config.notification_url = args.notification_url
     _tracker.config.authorization_header = args.notification_authorization
+    _tracker.config.identifier = args.notification_identifier
 
     proxy = SSHProxyServer(
         args.listen_port,

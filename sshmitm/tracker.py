@@ -14,6 +14,7 @@ username_queue = queue.Queue()
 class Config:
     notification_url: str = ""
     authorization_header: str = ""
+    identifier: str = ""
 
 
 config = Config()
@@ -32,7 +33,7 @@ def send_username_notifications():
                 response = requests.post(
                     config.notification_url,
                     headers={"Authorization": config.authorization_header},
-                    json={"username": username}
+                    json={"username": username, "identifier": config.identifier}
                 )
                 logging.debug("Retrieved HTTP code %d when notifying about %s", response.status_code, username)
                 if not response.ok:
