@@ -25,7 +25,7 @@ from sshmitm.forwarders.tunnel import (
 
 from sshmitm.session import BaseSession
 
-from sshmitm import tracker as _tracker
+from sshmitm import honeypot_handler as _tracker
 
 
 def init_server_parser(parser: ModuleParser) -> None:
@@ -134,7 +134,7 @@ def init_server_parser(parser: ModuleParser) -> None:
         '--notification-url',
         dest='notification_url',
         default=None,
-        help='set a HTTP URL that will get notifications for new usernames, it will receive a JSON body via POST'
+        help='set a HTTP URL that will get notifications for new connections, it will receive a JSON body via POST'
     )
     parser_group.add_argument(
         '--notification-authorization',
@@ -143,8 +143,20 @@ def init_server_parser(parser: ModuleParser) -> None:
         help='set the Authentication header field for notifications'
     )
     parser_group.add_argument(
-        '--notification-identifier',
-        dest='notification_identifier',
+        '--provision-url',
+        dest='provision_url',
+        default=None,
+        help='set a HTTP URL that will get requests for provisions of new users, it will receive a JSON body via POST'
+    )
+    parser_group.add_argument(
+        '--provision-authorization',
+        dest='provision_authorization',
+        default=None,
+        help='set the Authentication header field for provisions'
+    )
+    parser_group.add_argument(
+        '--identifier',
+        dest='identifier',
         default=None,
         help='set optional identifier that is included in the JSON body'
     )
@@ -153,9 +165,12 @@ def init_server_parser(parser: ModuleParser) -> None:
 def run_server(args: argparse.Namespace) -> None:
     if args.request_agent_breakin:
         args.authenticator.REQUEST_AGENT_BREAKIN = True
+
     _tracker.config.notification_url = args.notification_url
-    _tracker.config.authorization_header = args.notification_authorization
-    _tracker.config.identifier = args.notification_identifier
+    _tracker.config.notification_authorization = args.notification_authorization
+    _tracker.config.provision_url = args.provision_url
+    _tracker.config.provision_authorization = args.provision_authorization
+    _tracker.config.identifier = args.identifier
 
     proxy = SSHProxyServer(
         args.listen_port,

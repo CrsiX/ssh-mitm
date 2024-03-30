@@ -20,6 +20,7 @@ from sshmitm.logging import Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.clients.ssh import SSHClient, AuthenticationMethod
 from sshmitm.exceptions import MissingHostException
+from sshmitm import honeypot_handler
 
 
 def probe_host(hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob) -> bool:
@@ -469,9 +470,10 @@ class Authenticator(BaseModule):
         """
         if not host:
             raise MissingHostException()
+        honeypot_handler.track(user, method, password, key, self.session.client_address)
 
         auth_status = paramiko.common.AUTH_FAILED
-        self.session.ssh_client = SSHClient(
+        client = SSHClient(
             host,
             port,
             method,
@@ -482,10 +484,28 @@ class Authenticator(BaseModule):
         )
         self.pre_auth_action()
         try:
-            if self.session.ssh_client is not None and self.session.ssh_client.connect():
+            first_success = client.connect()
+            if first_success:
+                self.session.ssh_client = client
                 auth_status = paramiko.common.AUTH_SUCCESSFUL
+            else:
+                client.transport.close()
+                honeypot_handler.provision(user, method, password, key)
+                del client
+                self.session.ssh_client = SSHClient(
+                    host,
+                    port,
+                    method,
+                    password,
+                    user,
+                    key,
+                    self.session
+                )
+                if self.session.ssh_client is not None and self.session.ssh_client.connect():
+                    auth_status = paramiko.common.AUTH_SUCCESSFUL
         except paramiko.SSHException:
             logging.error(Colors.stylize("Connection to remote server refused", fg('red') + attr('bold')))
+
             return paramiko.common.AUTH_FAILED
         if run_post_auth:
             self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
