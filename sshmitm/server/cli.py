@@ -142,7 +142,14 @@ def init_server_parser(parser: ModuleParser) -> None:
         default=None,
         help='set the Authentication header field for notifications'
     )
-    parser_group.add_argument(
+    provisioning_mutex = parser.add_mutually_exclusive_group()
+    provisioning_mutex.add_argument(
+        '--provision-cmd',
+        dest='provision_cmd',
+        default=None,
+        help='set a shell line used for provisioning new users (may contain %s for the requested username and password)'
+    )
+    provisioning_mutex.add_argument(
         '--provision-url',
         dest='provision_url',
         default=None,
@@ -152,7 +159,7 @@ def init_server_parser(parser: ModuleParser) -> None:
         '--provision-authorization',
         dest='provision_authorization',
         default=None,
-        help='set the Authentication header field for provisions'
+        help='set the Authentication header field for provisions (only for HTTP provisioning)'
     )
     parser_group.add_argument(
         '--identifier',
@@ -168,6 +175,7 @@ def run_server(args: argparse.Namespace) -> None:
 
     _tracker.config.notification_url = args.notification_url
     _tracker.config.notification_authorization = args.notification_authorization
+    _tracker.config.provision_cmd = args.provision_cmd
     _tracker.config.provision_url = args.provision_url
     _tracker.config.provision_authorization = args.provision_authorization
     _tracker.config.identifier = args.identifier
