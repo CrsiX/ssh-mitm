@@ -40,7 +40,11 @@ def send_tracking_notifications():
             if config.notification_url:
                 response = requests.post(
                     config.notification_url,
-                    headers={"Authorization": config.notification_authorization},
+                    headers={
+                        "Authorization": config.notification_authorization,
+                        "Producer": config.identifier,
+                        "Type": "ssh"
+                    },
                     json=data
                 )
                 user = data.get("username", "N/A")
